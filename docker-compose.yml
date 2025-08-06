@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  music-tutor:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key}
+    volumes:
+      - ./database:/app/database
+      - ./server/public/audio:/app/server/public/audio
+    restart: unless-stopped
+
+  # Optional: Add Redis for caching in production
+  # redis:
+  #   image: redis:alpine
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   restart: unless-stopped
+
+volumes:
+  redis_data: 

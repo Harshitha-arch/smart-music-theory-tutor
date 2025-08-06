@@ -1,0 +1,35 @@
+{
+  "name": "smart-music-theory-tutor",
+  "version": "1.0.0",
+  "description": "AI-Powered Music Theory Tutor with AMEB-style questions",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "nodemon server/index.js",
+    "client": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "install-all": "npm install && cd client && npm install",
+    "start": "node server/index.js"
+  },
+  "keywords": ["music", "theory", "ai", "education", "ameb"],
+  "author": "Music AI Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "openai": "^4.20.1",
+    "music21": "^0.1.0",
+    "canvas": "^2.11.2",
+    "sqlite3": "^5.1.6",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0",
+    "@types/express": "^4.17.17"
+  }
+} 
