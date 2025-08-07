@@ -12,6 +12,7 @@ const QuestionPage: React.FC = () => {
     isAnswered,
     isCorrect,
     showExplanation,
+    userProgress,
     setSelectedAnswer,
     setAnswered,
     setCorrect,
@@ -48,7 +49,7 @@ const QuestionPage: React.FC = () => {
         setIsPlaying(false);
       }
     };
-  }, [currentQuestion]);
+  }, [currentQuestion, audioElement]);
 
   const handleOptionSelect = (option: string) => {
     if (isAnswered) return;
@@ -60,7 +61,7 @@ const QuestionPage: React.FC = () => {
 
     try {
       // Use mock API for demo
-      const result = await mockAPI.submitAnswer();
+      await mockAPI.submitAnswer();
       
       const isAnswerCorrect = selectedAnswer === currentQuestion.correct;
       
@@ -77,11 +78,21 @@ const QuestionPage: React.FC = () => {
       });
 
       // Update progress
+      const existingProgress = userProgress.find(
+        p => p.instrument === currentQuestion.instrument && p.grade === currentQuestion.grade
+      );
+      
+      const totalQuestions = (existingProgress?.totalQuestions || 0) + 1;
+      const correctAnswers = (existingProgress?.correctAnswers || 0) + (isAnswerCorrect ? 1 : 0);
+      
       updateProgress({
         userId: 'demo-user',
         instrument: currentQuestion.instrument,
         grade: currentQuestion.grade,
-        isCorrect: isAnswerCorrect
+        totalQuestions,
+        correctAnswers,
+        accuracyRate: Math.round((correctAnswers / totalQuestions) * 100),
+        lastActivity: new Date().toISOString()
       });
 
       if (isAnswerCorrect) {
