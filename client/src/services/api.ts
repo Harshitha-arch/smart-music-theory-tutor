@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Question, UserProgress, UserAnswer } from '../stores/questionStore';
+import { Question, UserProgress } from '../stores/questionStore';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -206,7 +206,7 @@ export const mockAPI = {
           correct: 'B',
           explanation: 'This phrase contains 4 beats per measure, making it a 4/4 time signature. The rhythm pattern shows quarter notes that align with a 4-beat structure.',
           notation_image_base64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-          audio_url: '/audio/mock-audio.mp3',
+          audio_url: '/audio/mock-audio.wav',
           musicalExample: 'C4/4, D4/4, E4/4, F4/4, G4/4',
           instrument: 'piano',
           grade: 2,

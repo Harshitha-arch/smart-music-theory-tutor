@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Play, Music, Piano, Guitar, Violin, Flute, Star, Trophy, Target } from 'lucide-react';
+import { Play, Music, Music2, Music3, Music4, Mic, Star, Trophy, Target } from 'lucide-react';
 import { useQuestionStore } from '../stores/questionStore';
-import { questionAPI, mockAPI } from '../services/api';
+import { mockAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const HomePage: React.FC = () => {
@@ -17,10 +17,10 @@ const HomePage: React.FC = () => {
   } = useQuestionStore();
 
   const instruments = [
-    { id: 'piano', name: 'Piano', icon: Piano, description: 'Classical & Contemporary' },
-    { id: 'violin', name: 'Violin', icon: Violin, description: 'String Techniques' },
-    { id: 'guitar', name: 'Guitar', icon: Guitar, description: 'Folk & Rock' },
-    { id: 'flute', name: 'Flute', icon: Flute, description: 'Woodwind Mastery' },
+    { id: 'piano', name: 'Piano', icon: Music2, description: 'Classical & Contemporary' },
+    { id: 'violin', name: 'Violin', icon: Music3, description: 'String Techniques' },
+    { id: 'guitar', name: 'Guitar', icon: Music4, description: 'Folk & Rock' },
+    { id: 'flute', name: 'Flute', icon: Mic, description: 'Woodwind Mastery' },
   ];
 
   const grades = [
