@@ -27,9 +27,27 @@ const QuestionPage: React.FC = () => {
   useEffect(() => {
     if (currentQuestion?.audio_url) {
       const audio = new Audio(currentQuestion.audio_url);
+      
+      // Add event listeners for audio handling
       audio.addEventListener('ended', () => setIsPlaying(false));
+      audio.addEventListener('error', (e) => {
+        console.error('Audio loading failed:', e);
+        setAudioElement(null);
+      });
+      audio.addEventListener('canplaythrough', () => {
+        console.log('Audio loaded successfully');
+      });
+      
       setAudioElement(audio);
     }
+    
+    // Cleanup function
+    return () => {
+      if (audioElement) {
+        audioElement.pause();
+        setIsPlaying(false);
+      }
+    };
   }, [currentQuestion]);
 
   const handleOptionSelect = (option: string) => {
@@ -78,15 +96,21 @@ const QuestionPage: React.FC = () => {
     }
   };
 
-  const handlePlayAudio = () => {
+  const handlePlayAudio = async () => {
     if (audioElement) {
-      if (isPlaying) {
-        audioElement.pause();
-        audioElement.currentTime = 0;
+      try {
+        if (isPlaying) {
+          audioElement.pause();
+          audioElement.currentTime = 0;
+          setIsPlaying(false);
+        } else {
+          await audioElement.play();
+          setIsPlaying(true);
+        }
+      } catch (error) {
+        console.error('Audio playback failed:', error);
+        toast.error('Audio playback is not available for this question.');
         setIsPlaying(false);
-      } else {
-        audioElement.play();
-        setIsPlaying(true);
       }
     }
   };
@@ -155,22 +179,29 @@ const QuestionPage: React.FC = () => {
         {/* Audio Player */}
         <div className="audio-player">
           <h3 className="text-lg font-semibold mb-4">Audio Example</h3>
-          <button
-            onClick={handlePlayAudio}
-            className="flex items-center space-x-3 px-4 py-2 bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30 transition-colors"
-          >
-            {isPlaying ? (
-              <>
-                <Volume2 className="w-5 h-5" />
-                <span>Stop Audio</span>
-              </>
-            ) : (
-              <>
-                <Play className="w-5 h-5" />
-                <span>Play Audio</span>
-              </>
-            )}
-          </button>
+          {audioElement && currentQuestion.audio_url ? (
+            <button
+              onClick={handlePlayAudio}
+              className="flex items-center space-x-3 px-4 py-2 bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30 transition-colors"
+            >
+              {isPlaying ? (
+                <>
+                  <Volume2 className="w-5 h-5" />
+                  <span>Stop Audio</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-5 h-5" />
+                  <span>Play Audio</span>
+                </>
+              )}
+            </button>
+          ) : (
+            <div className="flex items-center space-x-3 px-4 py-2 bg-gray-100 rounded-lg opacity-50">
+              <Play className="w-5 h-5 text-gray-400" />
+              <span className="text-gray-500">Audio not available</span>
+            </div>
+          )}
         </div>
       </motion.div>
 
