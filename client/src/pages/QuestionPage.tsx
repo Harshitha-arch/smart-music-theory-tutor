@@ -4,6 +4,7 @@ import { Play, Volume2, Check, X, RotateCcw, ArrowRight } from 'lucide-react';
 import { useQuestionStore } from '../stores/questionStore';
 import { mockAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import { generateSimpleAudioDataURI } from '../utils/audioGenerator';
 
 const QuestionPage: React.FC = () => {
   const {
@@ -23,12 +24,33 @@ const QuestionPage: React.FC = () => {
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [audioError, setAudioError] = useState<string | null>(null);
 
   useEffect(() => {
     if (currentQuestion?.audio_url) {
-      const audio = new Audio(currentQuestion.audio_url);
+      const audio = new Audio();
+      
+      // Set up event listeners
       audio.addEventListener('ended', () => setIsPlaying(false));
+      audio.addEventListener('error', (e) => {
+        console.error('Audio error:', e);
+        setAudioError('Failed to load audio');
+        setIsPlaying(false);
+      });
+      audio.addEventListener('canplaythrough', () => {
+        setAudioError(null);
+      });
+      
+      // Set the audio source
+      audio.src = currentQuestion.audio_url;
+      
       setAudioElement(audio);
+      
+      // Cleanup function
+      return () => {
+        audio.pause();
+        audio.src = '';
+      };
     }
   }, [currentQuestion]);
 
@@ -43,6 +65,7 @@ const QuestionPage: React.FC = () => {
     try {
       // Use mock API for demo
       const result = await mockAPI.submitAnswer();
+      console.log('Answer submitted:', result);
       
       const isAnswerCorrect = selectedAnswer === currentQuestion.correct;
       
@@ -63,6 +86,10 @@ const QuestionPage: React.FC = () => {
         userId: 'demo-user',
         instrument: currentQuestion.instrument,
         grade: currentQuestion.grade,
+        totalQuestions: 1,
+        correctAnswers: isAnswerCorrect ? 1 : 0,
+        accuracyRate: isAnswerCorrect ? 100 : 0,
+        lastActivity: new Date().toISOString(),
         isCorrect: isAnswerCorrect
       });
 
@@ -78,16 +105,37 @@ const QuestionPage: React.FC = () => {
     }
   };
 
-  const handlePlayAudio = () => {
-    if (audioElement) {
+  const handlePlayAudio = async () => {
+    if (!audioElement) {
+      toast.error('Audio not available');
+      return;
+    }
+
+    try {
       if (isPlaying) {
         audioElement.pause();
         audioElement.currentTime = 0;
         setIsPlaying(false);
       } else {
-        audioElement.play();
-        setIsPlaying(true);
+        // Reset any previous errors
+        setAudioError(null);
+        
+        console.log('Attempting to play audio:', currentQuestion?.audio_url);
+        
+        // Try to play the audio
+        const playPromise = audioElement.play();
+        
+        if (playPromise !== undefined) {
+          await playPromise;
+          setIsPlaying(true);
+          console.log('Audio started playing successfully');
+        }
       }
+    } catch (error) {
+      console.error('Audio playback error:', error);
+      setAudioError('Failed to play audio');
+      setIsPlaying(false);
+      toast.error('Unable to play audio. Please try again.');
     }
   };
 
@@ -155,22 +203,64 @@ const QuestionPage: React.FC = () => {
         {/* Audio Player */}
         <div className="audio-player">
           <h3 className="text-lg font-semibold mb-4">Audio Example</h3>
-          <button
-            onClick={handlePlayAudio}
-            className="flex items-center space-x-3 px-4 py-2 bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30 transition-colors"
-          >
-            {isPlaying ? (
-              <>
-                <Volume2 className="w-5 h-5" />
-                <span>Stop Audio</span>
-              </>
-            ) : (
-              <>
-                <Play className="w-5 h-5" />
-                <span>Play Audio</span>
-              </>
+          <div className="space-y-3">
+            <button
+              onClick={handlePlayAudio}
+              disabled={audioError !== null}
+              className={`flex items-center space-x-3 px-4 py-2 rounded-lg transition-colors ${
+                audioError 
+                  ? 'bg-red-500 bg-opacity-20 cursor-not-allowed' 
+                  : isPlaying 
+                    ? 'bg-green-500 bg-opacity-20 hover:bg-opacity-30' 
+                    : 'bg-white bg-opacity-20 hover:bg-opacity-30'
+              }`}
+            >
+              {isPlaying ? (
+                <>
+                  <Volume2 className="w-5 h-5" />
+                  <span>Stop Audio</span>
+                </>
+              ) : audioError ? (
+                <>
+                  <X className="w-5 h-5 text-red-500" />
+                  <span>Audio Unavailable</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-5 h-5" />
+                  <span>Play Audio</span>
+                </>
+              )}
+            </button>
+            
+            {audioError && (
+              <div className="text-sm text-red-500 bg-red-100 bg-opacity-20 p-2 rounded">
+                {audioError}
+              </div>
             )}
-          </button>
+            
+            {isPlaying && (
+              <div className="text-sm text-green-600 bg-green-100 bg-opacity-20 p-2 rounded">
+                Playing audio...
+              </div>
+            )}
+            
+            {/* Test Audio Button */}
+            <button
+              onClick={() => {
+                const testAudio = new Audio(generateSimpleAudioDataURI(440, 1));
+                testAudio.play().then(() => {
+                  toast.success('Test audio played successfully!');
+                }).catch((error) => {
+                  console.error('Test audio error:', error);
+                  toast.error('Test audio failed to play');
+                });
+              }}
+              className="mt-2 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+            >
+              Test Audio
+            </button>
+          </div>
         </div>
       </motion.div>
 

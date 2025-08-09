@@ -29,6 +29,7 @@ export interface UserProgress {
   correctAnswers: number;
   accuracyRate: number;
   lastActivity: string;
+  isCorrect?: boolean; // Add this optional property
 }
 
 export interface UserAnswer {

@@ -1,95 +1,71 @@
-const { createCanvas } = require('canvas');
-const Vex = require('vexflow');
-
-// Initialize VexFlow
-const { Factory, EasyScore, Tools } = Vex.Flow;
-
+// Simple SVG-based notation service
 function createNotation(musicalExample, instrument) {
   try {
-    // Parse musical example (format: "C4/4, D4/4, E4/4, F4/4, G4/4")
-    const notes = parseMusicalExample(musicalExample);
-    
-    // Create canvas
-    const canvas = createCanvas(800, 200);
-    const context = canvas.getContext('2d');
-    
-    // Initialize VexFlow
-    const vf = new Factory({
-      renderer: { elementId: null, width: 800, height: 200 }
-    });
-    
-    const score = vf.EasyScore();
-    const system = vf.System();
-    
-    // Create stave
-    const stave = system
-      .addStave({
-        voices: [
-          score.voice(score.notes(notes.join(', '), { time: '4/4' }))
-        ]
-      })
-      .addClef('treble')
-      .addTimeSignature('4/4');
-    
-    // Render
-    vf.draw();
-    
-    // Convert canvas to base64
-    const base64 = canvas.toDataURL('image/png');
-    
-    return base64;
-    
+    // Create a simple SVG staff with basic notation
+    const svg = createSimpleStaffSVG(musicalExample, instrument);
+    return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
   } catch (error) {
     console.error('Error creating notation:', error);
     return createFallbackNotation(instrument);
   }
 }
 
-function parseMusicalExample(example) {
-  // Parse format like "C4/4, D4/4, E4/4, F4/4, G4/4"
-  const notes = example.split(',').map(note => {
-    const [pitch, duration] = note.trim().split('/');
-    return `${pitch}/${duration}`;
+function createSimpleStaffSVG(musicalExample, instrument) {
+  const width = 400;
+  const height = 150;
+  
+  // Parse musical example (format: "C4/4, D4/4, E4/4, F4/4, G4/4")
+  const notes = parseMusicalExample(musicalExample);
+  
+  // Create SVG content
+  let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">`;
+  
+  // Background
+  svg += `<rect width="${width}" height="${height}" fill="white"/>`;
+  
+  // Staff lines
+  for (let i = 0; i < 5; i++) {
+    const y = 30 + i * 15;
+    svg += `<line x1="20" y1="${y}" x2="${width - 20}" y2="${y}" stroke="black" stroke-width="1"/>`;
+  }
+  
+  // Treble clef
+  svg += `<text x="30" y="60" font-family="Arial" font-size="24" fill="black">𝄞</text>`;
+  
+  // Time signature
+  svg += `<text x="80" y="45" font-family="Arial" font-size="16" fill="black">4</text>`;
+  svg += `<text x="80" y="65" font-family="Arial" font-size="16" fill="black">4</text>`;
+  
+  // Notes
+  const noteSymbols = ['♩', '♪', '♫', '♬'];
+  notes.forEach((note, index) => {
+    const x = 120 + index * 40;
+    const y = 60;
+    svg += `<text x="${x}" y="${y}" font-family="Arial" font-size="20" fill="black">${noteSymbols[index % noteSymbols.length]}</text>`;
   });
   
-  return notes;
+  svg += '</svg>';
+  return svg;
+}
+
+function parseMusicalExample(example) {
+  // Parse format like "C4/4, D4/4, E4/4, F4/4, G4/4"
+  if (!example) return ['C4/4', 'D4/4', 'E4/4', 'F4/4'];
+  
+  const notes = example.split(',').map(note => note.trim());
+  return notes.length > 0 ? notes : ['C4/4', 'D4/4', 'E4/4', 'F4/4'];
 }
 
 function createFallbackNotation(instrument) {
-  // Create a simple fallback notation
-  const canvas = createCanvas(400, 150);
-  const ctx = canvas.getContext('2d');
+  // Create a simple fallback SVG
+  const svg = `<svg width="400" height="150" xmlns="http://www.w3.org/2000/svg">
+    <rect width="400" height="150" fill="white"/>
+    <text x="150" y="75" font-family="Arial" font-size="16" fill="black" text-anchor="middle">
+      Musical Notation for ${instrument}
+    </text>
+  </svg>`;
   
-  // Draw staff lines
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = 1;
-  
-  for (let i = 0; i < 5; i++) {
-    const y = 20 + i * 20;
-    ctx.beginPath();
-    ctx.moveTo(50, y);
-    ctx.lineTo(350, y);
-    ctx.stroke();
-  }
-  
-  // Draw treble clef
-  ctx.font = '48px Arial';
-  ctx.fillStyle = '#000';
-  ctx.fillText('𝄞', 60, 80);
-  
-  // Draw time signature
-  ctx.font = '24px Arial';
-  ctx.fillText('4', 120, 60);
-  ctx.fillText('4', 120, 80);
-  
-  // Draw some notes
-  ctx.font = '20px Arial';
-  ctx.fillText('♩', 180, 70);
-  ctx.fillText('♩', 220, 70);
-  ctx.fillText('♩', 260, 70);
-  ctx.fillText('♩', 300, 70);
-  
-  return canvas.toDataURL('image/png');
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
 }
 
 // Alternative notation using MusicXML-like format
@@ -98,7 +74,6 @@ function createMusicXMLNotation(musicalExample, instrument) {
   
   // Create a simple MusicXML-like structure
   const musicXML = `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 3.1 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
 <score-partwise version="3.1">
   <part-list>
     <score-part id="P1">
@@ -121,10 +96,14 @@ function createMusicXMLNotation(musicalExample, instrument) {
           <line>2</line>
         </clef>
       </attributes>
-      ${notes.map(note => {
-        const [pitch, duration] = note.split('/');
-        return `<note><pitch><step>${pitch[0]}</step><octave>${pitch[1]}</octave></pitch><duration>${duration}</duration></note>`;
-      }).join('')}
+      <note>
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+      </note>
     </measure>
   </part>
 </score-partwise>`;

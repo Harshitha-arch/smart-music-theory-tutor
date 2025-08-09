@@ -1,216 +1,154 @@
-const fs = require('fs');
-const path = require('path');
-const { exec } = require('child_process');
-const util = require('util');
+// Simple audio service that generates working audio URLs
+const crypto = require('crypto');
 
-// Audio generation using Tone.js-like approach
-class AudioGenerator {
-  constructor() {
-    this.audioDir = path.join(__dirname, '../public/audio');
-    this.ensureAudioDirectory();
-  }
-
-  ensureAudioDirectory() {
-    if (!fs.existsSync(this.audioDir)) {
-      fs.mkdirSync(this.audioDir, { recursive: true });
-    }
-  }
-
-  async generateAudio(musicalExample, instrument) {
-    try {
-      // Parse musical example
-      const notes = this.parseMusicalExample(musicalExample);
-      
-      // Generate audio file
-      const filename = `audio_${Date.now()}.mp3`;
-      const filepath = path.join(this.audioDir, filename);
-      
-      // Create audio using Web Audio API simulation
-      await this.createAudioFile(notes, instrument, filepath);
-      
-      return `/audio/${filename}`;
-      
-    } catch (error) {
-      console.error('Error generating audio:', error);
-      return this.createFallbackAudio(instrument);
-    }
-  }
-
-  parseMusicalExample(example) {
-    // Parse format like "C4/4, D4/4, E4/4, F4/4, G4/4"
-    return example.split(',').map(note => {
-      const [pitch, duration] = note.trim().split('/');
-      return { pitch, duration: parseInt(duration) };
-    });
-  }
-
-  async createAudioFile(notes, instrument, filepath) {
-    // Create a simple audio file using Node.js
-    // In a real implementation, you'd use a proper audio library
+// Generate a simple audio data URI that browsers can play
+function generateAudioDataURI(musicalExample, instrument) {
+  try {
+    // Parse musical example
+    const notes = parseMusicalExample(musicalExample);
     
-    // For demo purposes, create a placeholder audio file
-    const audioContent = this.generateSimpleAudio(notes, instrument);
-    
-    // Write audio data to file
-    fs.writeFileSync(filepath, audioContent);
-    
-    return filepath;
-  }
-
-  generateSimpleAudio(notes, instrument) {
-    // Generate a simple audio representation
-    // This is a placeholder - in production you'd use a proper audio library
-    
+    // Create a simple audio buffer (sine wave)
     const sampleRate = 44100;
-    const duration = notes.reduce((total, note) => total + (note.duration * 0.25), 0);
-    const samples = Math.floor(sampleRate * duration);
+    const duration = 2; // 2 seconds
+    const samples = sampleRate * duration;
     
-    // Create a simple sine wave for each note
+    // Generate a simple melody
+    const frequencies = notes.map(note => getFrequency(note.pitch)).slice(0, 4);
     const audioData = new Float32Array(samples);
     
-    let currentSample = 0;
-    notes.forEach(note => {
-      const frequency = this.getFrequency(note.pitch);
-      const noteDuration = note.duration * 0.25; // 0.25 seconds per beat
-      const noteSamples = Math.floor(sampleRate * noteDuration);
+    // Create a simple melody
+    for (let i = 0; i < samples; i++) {
+      const t = i / sampleRate;
+      const noteIndex = Math.floor(t * 2) % frequencies.length; // Change note every 0.5 seconds
+      const frequency = frequencies[noteIndex] || 440;
       
-      for (let i = 0; i < noteSamples && currentSample < samples; i++) {
-        const t = i / sampleRate;
-        audioData[currentSample] = Math.sin(2 * Math.PI * frequency * t) * 0.3;
-        currentSample++;
-      }
-    });
+      // Create a simple sine wave with envelope
+      const envelope = Math.exp(-t * 2); // Simple decay
+      audioData[i] = Math.sin(2 * Math.PI * frequency * t) * 0.3 * envelope;
+    }
     
-    return audioData;
-  }
-
-  getFrequency(pitch) {
-    // Convert pitch to frequency
-    const pitchMap = {
-      'C': 261.63, 'C#': 277.18, 'D': 293.66, 'D#': 311.13,
-      'E': 329.63, 'F': 349.23, 'F#': 369.99, 'G': 392.00,
-      'G#': 415.30, 'A': 440.00, 'A#': 466.16, 'B': 493.88
-    };
+    // Convert to 16-bit PCM
+    const pcmData = new Int16Array(samples);
+    for (let i = 0; i < samples; i++) {
+      pcmData[i] = Math.round(audioData[i] * 32767);
+    }
     
-    const note = pitch.slice(0, -1);
-    const octave = parseInt(pitch.slice(-1));
-    const baseFreq = pitchMap[note] || 261.63;
+    // Create WAV header
+    const wavHeader = createWAVHeader(samples, sampleRate);
+    const wavData = new Uint8Array(wavHeader.length + pcmData.length * 2);
+    wavData.set(wavHeader, 0);
+    wavData.set(new Uint8Array(pcmData.buffer), wavHeader.length);
     
-    return baseFreq * Math.pow(2, octave - 4);
-  }
-
-  createFallbackAudio(instrument) {
-    // Return a fallback audio file
-    const fallbackAudio = {
-      piano: '/audio/piano-sample.mp3',
-      violin: '/audio/violin-sample.mp3',
-      guitar: '/audio/guitar-sample.mp3',
-      flute: '/audio/flute-sample.mp3'
-    };
+    // Convert to base64
+    const base64 = Buffer.from(wavData).toString('base64');
+    return `data:audio/wav;base64,${base64}`;
     
-    return fallbackAudio[instrument] || '/audio/piano-sample.mp3';
-  }
-
-  // Generate MIDI file as alternative
-  generateMIDI(notes, instrument, filepath) {
-    const midiData = this.createMIDIData(notes, instrument);
-    fs.writeFileSync(filepath, midiData);
-    return filepath;
-  }
-
-  createMIDIData(notes, instrument) {
-    // Create a simple MIDI file structure
-    const midiHeader = Buffer.from([
-      0x4D, 0x54, 0x68, 0x64, // MThd
-      0x00, 0x00, 0x00, 0x06, // Header length
-      0x00, 0x01, // Format 1
-      0x00, 0x01, // 1 track
-      0x01, 0xE0  // Ticks per quarter note
-    ]);
-    
-    // Track data would be more complex in a real implementation
-    const trackData = Buffer.from([
-      0x4D, 0x54, 0x72, 0x6B, // MTrk
-      0x00, 0x00, 0x00, 0x08, // Track length
-      0x00, 0xFF, 0x2F, 0x00  // End of track
-    ]);
-    
-    return Buffer.concat([midiHeader, trackData]);
+  } catch (error) {
+    console.error('Error generating audio:', error);
+    return createFallbackAudioDataURI(instrument);
   }
 }
 
-// Instrument-specific audio generators
-class PianoAudioGenerator extends AudioGenerator {
-  constructor() {
-    super();
-    this.instrument = 'piano';
-  }
-
-  generateSimpleAudio(notes, instrument) {
-    // Piano-specific audio generation
-    return super.generateSimpleAudio(notes, instrument);
-  }
+function parseMusicalExample(example) {
+  // Parse format like "C4/4, D4/4, E4/4, F4/4, G4/4"
+  if (!example) return [{ pitch: 'C4', duration: 1 }];
+  
+  return example.split(',').map(note => {
+    const [pitch, duration] = note.trim().split('/');
+    return { pitch, duration: parseInt(duration) || 1 };
+  });
 }
 
-class ViolinAudioGenerator extends AudioGenerator {
-  constructor() {
-    super();
-    this.instrument = 'violin';
-  }
-
-  generateSimpleAudio(notes, instrument) {
-    // Violin-specific audio generation with different timbre
-    const sampleRate = 44100;
-    const duration = notes.reduce((total, note) => total + (note.duration * 0.25), 0);
-    const samples = Math.floor(sampleRate * duration);
-    
-    const audioData = new Float32Array(samples);
-    
-    let currentSample = 0;
-    notes.forEach(note => {
-      const frequency = this.getFrequency(note.pitch);
-      const noteDuration = note.duration * 0.25;
-      const noteSamples = Math.floor(sampleRate * noteDuration);
-      
-      for (let i = 0; i < noteSamples && currentSample < samples; i++) {
-        const t = i / sampleRate;
-        // Add harmonics for violin-like sound
-        audioData[currentSample] = (
-          Math.sin(2 * Math.PI * frequency * t) * 0.2 +
-          Math.sin(2 * Math.PI * frequency * 2 * t) * 0.1 +
-          Math.sin(2 * Math.PI * frequency * 3 * t) * 0.05
-        );
-        currentSample++;
-      }
-    });
-    
-    return audioData;
-  }
+function getFrequency(pitch) {
+  // Convert pitch to frequency
+  const pitchMap = {
+    'C': 261.63, 'C#': 277.18, 'D': 293.66, 'D#': 311.13,
+    'E': 329.63, 'F': 349.23, 'F#': 369.99, 'G': 392.00,
+    'G#': 415.30, 'A': 440.00, 'A#': 466.16, 'B': 493.88
+  };
+  
+  const note = pitch.slice(0, -1);
+  const octave = parseInt(pitch.slice(-1));
+  const baseFreq = pitchMap[note] || 261.63;
+  
+  return baseFreq * Math.pow(2, octave - 4);
 }
 
-// Factory function to get appropriate audio generator
-function getAudioGenerator(instrument) {
-  switch (instrument) {
-    case 'violin':
-      return new ViolinAudioGenerator();
-    case 'guitar':
-      return new GuitarAudioGenerator();
-    case 'flute':
-      return new FluteAudioGenerator();
-    default:
-      return new PianoAudioGenerator();
+function createWAVHeader(samples, sampleRate) {
+  const buffer = new ArrayBuffer(44);
+  const view = new DataView(buffer);
+  
+  // RIFF header
+  view.setUint32(0, 0x52494646, false); // "RIFF"
+  view.setUint32(4, 36 + samples * 2, true); // File size
+  view.setUint32(8, 0x57415645, false); // "WAVE"
+  
+  // fmt chunk
+  view.setUint32(12, 0x666D7420, false); // "fmt "
+  view.setUint32(16, 16, true); // Chunk size
+  view.setUint16(20, 1, true); // Audio format (PCM)
+  view.setUint16(22, 1, true); // Channels
+  view.setUint32(24, sampleRate, true); // Sample rate
+  view.setUint32(28, sampleRate * 2, true); // Byte rate
+  view.setUint16(32, 2, true); // Block align
+  view.setUint16(34, 16, true); // Bits per sample
+  
+  // data chunk
+  view.setUint32(36, 0x64617461, false); // "data"
+  view.setUint32(40, samples * 2, true); // Data size
+  
+  return new Uint8Array(buffer);
+}
+
+function createFallbackAudioDataURI(instrument) {
+  // Create a simple fallback audio (440Hz sine wave for 1 second)
+  const sampleRate = 44100;
+  const duration = 1;
+  const samples = sampleRate * duration;
+  
+  const audioData = new Float32Array(samples);
+  for (let i = 0; i < samples; i++) {
+    const t = i / sampleRate;
+    audioData[i] = Math.sin(2 * Math.PI * 440 * t) * 0.3;
   }
+  
+  // Convert to 16-bit PCM
+  const pcmData = new Int16Array(samples);
+  for (let i = 0; i < samples; i++) {
+    pcmData[i] = Math.round(audioData[i] * 32767);
+  }
+  
+  // Create WAV header
+  const wavHeader = createWAVHeader(samples, sampleRate);
+  const wavData = new Uint8Array(wavHeader.length + pcmData.length * 2);
+  wavData.set(wavHeader, 0);
+  wavData.set(new Uint8Array(pcmData.buffer), wavHeader.length);
+  
+  // Convert to base64
+  const base64 = Buffer.from(wavData).toString('base64');
+  return `data:audio/wav;base64,${base64}`;
 }
 
 // Main audio generation function
 async function generateAudio(musicalExample, instrument) {
-  const generator = getAudioGenerator(instrument);
-  return await generator.generateAudio(musicalExample, instrument);
+  try {
+    // Generate a unique ID for this audio
+    const audioId = crypto.randomBytes(8).toString('hex');
+    
+    // Create the audio data URI
+    const audioDataURI = generateAudioDataURI(musicalExample, instrument);
+    
+    // Return the data URI directly (no file system needed)
+    return audioDataURI;
+    
+  } catch (error) {
+    console.error('Error generating audio:', error);
+    return createFallbackAudioDataURI(instrument);
+  }
 }
 
 module.exports = {
   generateAudio,
-  AudioGenerator,
-  PianoAudioGenerator,
-  ViolinAudioGenerator
+  generateAudioDataURI,
+  createFallbackAudioDataURI
 }; 

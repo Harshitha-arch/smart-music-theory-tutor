@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Music, Piano, Guitar, Violin, Flute, Star, Trophy, Target } from 'lucide-react';
+import { Play, Music, Music2, Music3, Music4, Star, Trophy, Target } from 'lucide-react';
 import { useQuestionStore } from '../stores/questionStore';
-import { questionAPI, mockAPI } from '../services/api';
+import { realAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import PracticeMode from '../components/PracticeMode';
 
 const HomePage: React.FC = () => {
   const {
@@ -16,11 +17,13 @@ const HomePage: React.FC = () => {
     isGenerating
   } = useQuestionStore();
 
+  const [activeSession, setActiveSession] = useState<any>(null);
+
   const instruments = [
-    { id: 'piano', name: 'Piano', icon: Piano, description: 'Classical & Contemporary' },
-    { id: 'violin', name: 'Violin', icon: Violin, description: 'String Techniques' },
-    { id: 'guitar', name: 'Guitar', icon: Guitar, description: 'Folk & Rock' },
-    { id: 'flute', name: 'Flute', icon: Flute, description: 'Woodwind Mastery' },
+    { id: 'piano', name: 'Piano', icon: Music, description: 'Classical & Contemporary' },
+    { id: 'violin', name: 'Violin', icon: Music2, description: 'String Techniques' },
+    { id: 'guitar', name: 'Guitar', icon: Music3, description: 'Folk & Rock' },
+    { id: 'flute', name: 'Flute', icon: Music4, description: 'Woodwind Mastery' },
   ];
 
   const grades = [
@@ -39,7 +42,7 @@ const HomePage: React.FC = () => {
       setGenerating(true);
       
       // Use mock API for demo purposes
-      const question = await mockAPI.generateQuestion();
+      const question = await realAPI.generateQuestion(selectedInstrument, selectedGrade);
       
       setCurrentQuestion(question);
       toast.success('Question generated successfully!');
@@ -50,6 +53,26 @@ const HomePage: React.FC = () => {
     } finally {
       setGenerating(false);
     }
+  };
+
+  const handleStartPracticeSession = (topic: string, instrument: string, grade: number) => {
+    const session = {
+      id: Date.now().toString(),
+      topic,
+      instrument,
+      grade,
+      questionsAnswered: 0,
+      correctAnswers: 0,
+      timeSpent: 0,
+      isActive: true
+    };
+    setActiveSession(session);
+    toast.success('Practice session started!');
+  };
+
+  const handleEndPracticeSession = (sessionId: string) => {
+    setActiveSession(null);
+    toast.success('Practice session ended!');
   };
 
   return (
@@ -173,6 +196,30 @@ const HomePage: React.FC = () => {
             </div>
           )}
         </button>
+      </motion.div>
+
+      {/* Practice Mode Section */}
+      <motion.div
+        className="mt-20"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.7 }}
+      >
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-white mb-4">Practice Mode</h2>
+          <p className="text-white text-opacity-90 max-w-2xl mx-auto">
+            Focus on specific topics and improve your skills with targeted practice sessions. 
+            Track your progress and master music theory concepts systematically.
+          </p>
+        </div>
+        
+        <div className="max-w-4xl mx-auto">
+          <PracticeMode
+            onStartSession={handleStartPracticeSession}
+            onEndSession={handleEndPracticeSession}
+            activeSession={activeSession}
+          />
+        </div>
       </motion.div>
 
       {/* Features Section */}

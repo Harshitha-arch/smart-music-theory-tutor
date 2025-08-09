@@ -4,7 +4,7 @@ const path = require('path');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors());
@@ -16,7 +16,16 @@ const questionRoutes = require('./routes/questions');
 const userRoutes = require('./routes/users');
 const progressRoutes = require('./routes/progress');
 
-// API Routes
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    message: 'Music AI Tutor API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Questions routes
 app.use('/api/questions', questionRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/progress', progressRoutes);

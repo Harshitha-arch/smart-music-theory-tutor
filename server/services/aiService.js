@@ -1,8 +1,14 @@
 const OpenAI = require('openai');
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let openai;
+try {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+} catch (error) {
+  console.log('OpenAI API key not configured, using mock data');
+  openai = null;
+}
 
 // Question templates for different topics
 const QUESTION_TEMPLATES = {
@@ -102,7 +108,41 @@ async function generateQuestion(instrument, grade, topics) {
     const templates = QUESTION_TEMPLATES[selectedTopic] || QUESTION_TEMPLATES['note recognition'];
     const questionTemplate = templates[Math.floor(Math.random() * templates.length)];
     
-    // Generate question using OpenAI
+    // Generate question using OpenAI or fallback
+    if (!openai) {
+      // Fallback to mock data when OpenAI is not available
+      const mockQuestions = {
+        'note recognition': {
+          question: `Identify the note shown in this ${instrument} example:`,
+          options: { A: "C", B: "D", C: "E", D: "F" },
+          correct: "C",
+          explanation: `This question tests your ability to recognize notes in ${instrument} music at grade ${grade} level.`
+        },
+        'time signatures': {
+          question: `What is the correct time signature for this ${instrument} phrase?`,
+          options: { A: "2/4", B: "3/4", C: "4/4", D: "6/8" },
+          correct: "C",
+          explanation: `This phrase contains 4 beats per measure, making it a 4/4 time signature.`
+        },
+        'intervals': {
+          question: `What is the interval between the two highlighted notes in this ${instrument} example?`,
+          options: { A: "Major 3rd", B: "Perfect 4th", C: "Perfect 5th", D: "Major 6th" },
+          correct: "C",
+          explanation: `The interval between these notes is a perfect 5th, which is common in ${instrument} music.`
+        }
+      };
+      
+      const mockQuestion = mockQuestions[selectedTopic] || mockQuestions['note recognition'];
+      
+      return {
+        ...mockQuestion,
+        musicalExample: musicalExample,
+        topic: selectedTopic,
+        instrument,
+        grade
+      };
+    }
+
     const prompt = `
 You are an expert music theory tutor creating questions for the AMEB (Australian Music Examination Board) syllabus.
 

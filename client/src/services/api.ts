@@ -1,7 +1,7 @@
 import axios from 'axios';
-import { Question, UserProgress, UserAnswer } from '../stores/questionStore';
+import { Question, UserProgress } from '../stores/questionStore';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -189,7 +189,24 @@ export const progressAPI = {
   },
 };
 
-// Mock data for development
+// Real API calls to backend
+export const realAPI = {
+  generateQuestion: async (instrument: string, grade: number): Promise<GenerateQuestionResponse> => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/questions/generate`, {
+        instrument,
+        grade
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error calling real API:', error);
+      // Fallback to mock if real API fails
+      return mockAPI.generateQuestion();
+    }
+  },
+};
+
+// Mock data for development (fallback)
 export const mockAPI = {
   generateQuestion: (): Promise<GenerateQuestionResponse> => {
     return new Promise((resolve) => {
@@ -205,8 +222,8 @@ export const mockAPI = {
           },
           correct: 'B',
           explanation: 'This phrase contains 4 beats per measure, making it a 4/4 time signature. The rhythm pattern shows quarter notes that align with a 4-beat structure.',
-          notation_image_base64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-          audio_url: '/audio/mock-audio.mp3',
+          notation_image_base64: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0id2hpdGUiLz48dGV4dCB4PSIyMDAiIHk9Ijc1IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9ImJsYWNrIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5NdXNpY2FsIE5vdGF0aW9uPC90ZXh0Pjwvc3ZnPg==',
+          audio_url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
           musicalExample: 'C4/4, D4/4, E4/4, F4/4, G4/4',
           instrument: 'piano',
           grade: 2,

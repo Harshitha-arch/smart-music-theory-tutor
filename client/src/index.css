@@ -98,9 +98,17 @@
   
   .audio-player {
     @apply bg-gradient-to-r from-purple-500 to-blue-500;
-    @apply text-white rounded-lg p-3;
-    @apply flex items-center space-x-3;
-    @apply shadow-lg;
+  }
+  
+  .stat-card {
+    @apply bg-white rounded-xl shadow-lg p-6;
+    @apply border border-gray-200;
+    @apply transition-all duration-200;
+  }
+  
+  .stat-card:hover {
+    @apply transform scale-[1.02];
+    @apply shadow-xl;
   }
   
   .progress-bar {
