@@ -56,8 +56,8 @@ const ProfilePage: React.FC = () => {
                 <User className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-800">{userData.username}</h2>
-                <p className="text-gray-600">{userData.email}</p>
+                <h2 className="text-2xl font-bold text-black">{userData.username}</h2>
+                <p className="text-gray-700">{userData.email}</p>
               </div>
             </div>
             <button
@@ -71,7 +71,7 @@ const ProfilePage: React.FC = () => {
 
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+              <label className="block text-sm font-medium text-black mb-2">Username</label>
               {isEditing ? (
                 <input
                   type="text"
@@ -80,12 +80,12 @@ const ProfilePage: React.FC = () => {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
               ) : (
-                <p className="text-gray-800">{userData.username}</p>
+                <p className="text-black font-medium">{userData.username}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+              <label className="block text-sm font-medium text-black mb-2">Email</label>
               {isEditing ? (
                 <input
                   type="email"
@@ -94,12 +94,12 @@ const ProfilePage: React.FC = () => {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
               ) : (
-                <p className="text-gray-800">{userData.email}</p>
+                <p className="text-black font-medium">{userData.email}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Primary Instrument</label>
+              <label className="block text-sm font-medium text-black mb-2">Primary Instrument</label>
               {isEditing ? (
                 <select
                   value={userData.instrument}
@@ -112,12 +112,12 @@ const ProfilePage: React.FC = () => {
                   <option value="flute">Flute</option>
                 </select>
               ) : (
-                <p className="text-gray-800 capitalize">{userData.instrument}</p>
+                <p className="text-black font-medium capitalize">{userData.instrument}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Current Grade</label>
+              <label className="block text-sm font-medium text-black mb-2">Current Grade</label>
               {isEditing ? (
                 <select
                   value={userData.grade}
@@ -129,7 +129,7 @@ const ProfilePage: React.FC = () => {
                   ))}
                 </select>
               ) : (
-                <p className="text-gray-800">Grade {userData.grade}</p>
+                <p className="text-black font-medium">Grade {userData.grade}</p>
               )}
             </div>
           </div>
@@ -160,8 +160,8 @@ const ProfilePage: React.FC = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
-                <h3 className="font-semibold text-gray-800">Notifications</h3>
-                <p className="text-sm text-gray-600">Receive reminders to practice</p>
+                <h3 className="font-semibold text-black">Notifications</h3>
+                <p className="text-sm text-gray-700">Receive reminders to practice</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" className="sr-only peer" defaultChecked />
@@ -171,8 +171,8 @@ const ProfilePage: React.FC = () => {
 
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
-                <h3 className="font-semibold text-gray-800">Sound Effects</h3>
-                <p className="text-sm text-gray-600">Play sounds for correct/incorrect answers</p>
+                <h3 className="font-semibold text-black">Sound Effects</h3>
+                <p className="text-sm text-gray-700">Play sounds for correct/incorrect answers</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" className="sr-only peer" defaultChecked />
@@ -182,8 +182,8 @@ const ProfilePage: React.FC = () => {
 
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
-                <h3 className="font-semibold text-gray-800">Auto-Play Audio</h3>
-                <p className="text-sm text-gray-600">Automatically play audio examples</p>
+                <h3 className="font-semibold text-black">Auto-Play Audio</h3>
+                <p className="text-sm text-gray-700">Automatically play audio examples</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" className="sr-only peer" />
@@ -240,19 +240,19 @@ const ProfilePage: React.FC = () => {
         transition={{ duration: 0.5, delay: 0.8 }}
       >
         <div className="card p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Account Actions</h2>
+          <h2 className="text-xl font-semibold text-black mb-4">Account Actions</h2>
           <div className="space-y-3">
             <button className="w-full text-left p-3 hover:bg-gray-50 rounded-lg transition-colors">
               <div className="flex items-center space-x-3">
                 <Settings className="w-5 h-5 text-gray-600" />
-                <span className="text-gray-800">Advanced Settings</span>
+                <span className="text-black font-medium">Advanced Settings</span>
               </div>
             </button>
             
             <button className="w-full text-left p-3 hover:bg-gray-50 rounded-lg transition-colors">
               <div className="flex items-center space-x-3">
                 <LogOut className="w-5 h-5 text-gray-600" />
-                <span className="text-gray-800">Sign Out</span>
+                <span className="text-black font-medium">Sign Out</span>
               </div>
             </button>
           </div>
